@@ -3,9 +3,9 @@
 
 **Project:** Build with Kiro 2026 Hackathon  
 **Author:** AI Architect / Lead Engineer  
-**Status:** Draft — Awaiting Approval  
+**Status:** Approved — Ready for Design Phase  
 **Date:** 2026-08-30  
-**Version:** 1.0
+**Version:** 1.1
 
 ---
 
@@ -56,19 +56,25 @@ This application solves the problem by tightly coupling academic task management
 - Offline mode  
 - Multi-language UI localization  
 
-### 3.3 Ambiguity Resolutions
+### 3.3 Decision Log
 
-| Ambiguity | Decision |
+All open questions from v1.0 are resolved. These decisions are final for the MVP.
+
+| Decision | Resolution |
 |---|---|
-| Authentication provider | Email + password with JWT. No OAuth for MVP — reduces third-party dependencies. |
-| AI LLM provider | Google Gemini (gemini-1.5-flash) as primary. Free tier sufficient for MVP. Fallback to OpenAI GPT-4o-mini if Gemini unavailable. Provider abstracted behind a service layer. |
-| PDF processing | Text extraction only via `pypdf`. No OCR. Scanned image-only PDFs will produce empty/degraded output — user warned. |
-| Study plan output format | Structured JSON schedule (list of daily sessions with course, task, duration, rationale). Rendered as a visual weekly plan in the UI. |
-| Adaptive planning trigger | Manual trigger by user ("Regenerate Plan") after marking tasks complete or updating deadlines. Not automatic background re-scheduling. |
-| Progress tracking | Derived from task completion records. No separate manual time-logging required for MVP. |
-| Course management | Lightweight — required only to group tasks and material. No grade tracking, syllabus upload, or enrollment codes. |
-| Maximum document size | 10 MB per file. Text extracted and truncated to 50,000 characters per document for AI context safety. |
-| Multi-user | Single-user (per account). All data is user-scoped. No sharing or visibility across accounts. |
+| **Authentication** | Email + password with JWT (access + refresh tokens). No OAuth. Reduces third-party dependencies and auth complexity. |
+| **AI provider** | Google Gemini (`gemini-2.5-flash`) as the sole provider. Free tier available with sufficient rate limits for MVP use. No fallback provider implemented — provider is abstracted behind `AIService` so one can be added post-MVP without logic changes. Note: `gemini-1.5-flash` is deprecated; `gemini-2.5-flash` is the current stable recommended model. |
+| **File storage** | Local filesystem for development. For production: Supabase Storage (S3-compatible, integrates with Neon-adjacent free tier, minimal infrastructure overhead). Abstracted behind a `StorageService` so the backend is not coupled to a specific provider. |
+| **Exam representation** | Exams are a task subtype: `task_type = "exam"`. No separate entity. Keeps the data model simple while allowing exam-specific dashboard display, planner prioritization, and AI context. |
+| **Study plan persistence** | Latest/current plan only. No user-visible plan history. The plan is replaced on regeneration; only the generation timestamp is retained. |
+| **Deployment stack** | Vercel (frontend) + Render (backend, free tier with cold-start caveat) + Neon (managed PostgreSQL free tier). This combination is confirmed and well-suited to the project. |
+| **PDF processing** | Text extraction only via `pypdf`. No OCR. Scanned image-only PDFs produce empty/degraded output — user warned in the UI. |
+| **Study plan output format** | Structured JSON schedule (daily sessions with course, task, duration, session type, rationale). Parsed by backend, stored in DB, rendered as a visual weekly plan in the UI. |
+| **Adaptive planning trigger** | Manual — user clicks "Regenerate Plan" after completing tasks or updating deadlines. No automatic background rescheduling. |
+| **Progress tracking** | Tracks planned estimated study hours vs completed estimated study hours. No manual time-logging or study timer in MVP. Completion of a task counts its `estimated_duration` as "completed hours." |
+| **Course management** | Lightweight — name, color, optional description. No grade tracking, syllabus upload, or enrollment codes. |
+| **Document size limit** | 10 MB per file. Extracted text truncated to 50,000 characters per document when passed to AI context. |
+| **Multi-user isolation** | Single user per account. All data is user-scoped. No sharing or cross-account visibility. |
 
 ---
 
@@ -179,7 +185,7 @@ Requirements use MUST / SHOULD / MAY to indicate priority (RFC 2119).
 | DASH-04 | The dashboard MUST display overall task completion progress per course. |
 | DASH-05 | The dashboard MUST display the top 3 AI-prioritized "Recommended Next Actions" with rationale. |
 | DASH-06 | The dashboard MUST display a summary of the current study plan (today's sessions). |
-| DASH-07 | The dashboard SHOULD display a weekly study time target vs. planned hours comparison. |
+| DASH-07 | The dashboard SHOULD display a summary of planned estimated study hours for the week vs completed estimated hours to date. |
 | DASH-08 | The dashboard MUST be the first screen a user sees after login. |
 
 ### 4.9 Progress Tracking (PROGRESS)
@@ -190,7 +196,7 @@ Requirements use MUST / SHOULD / MAY to indicate priority (RFC 2119).
 | PROG-02 | The system MUST display completion rate as a percentage per course and overall. |
 | PROG-03 | The system MUST display a timeline of task completions to show study momentum. |
 | PROG-04 | The system SHOULD display a simple chart of completed tasks over time (last 14 days). |
-| PROG-05 | The system MUST display total estimated study hours planned vs hours completed. |
+| PROG-05 | The system MUST display total planned estimated study hours vs completed estimated study hours. Completed hours are derived by summing the `estimated_duration` of all completed tasks — no manual time-logging or study timer is required. |
 
 ### 4.10 Adaptive Planning (ADAPT)
 
@@ -261,9 +267,9 @@ Requirements use MUST / SHOULD / MAY to indicate priority (RFC 2119).
 | ID | Requirement |
 |---|---|
 | NFR-DEP-01 | The application MUST be publicly accessible via HTTPS without requiring local setup. |
-| NFR-DEP-02 | The frontend MUST be deployable to a free-tier static hosting service (e.g., Vercel, Netlify). |
-| NFR-DEP-03 | The backend MUST be deployable to a free-tier service (e.g., Render, Railway, Fly.io). |
-| NFR-DEP-04 | The database MUST use a managed PostgreSQL service (e.g., Neon, Supabase, Railway Postgres). |
+| NFR-DEP-02 | The frontend MUST be deployed to Vercel (free tier). |
+| NFR-DEP-03 | The backend MUST be deployed to Render (free tier). Cold-start latency on the free tier MUST be documented in the README. |
+| NFR-DEP-04 | The database MUST use Neon managed PostgreSQL (free tier). |
 | NFR-DEP-05 | The deployment MUST be reproducible from the README instructions. |
 | NFR-DEP-06 | The application MUST include a health-check endpoint (`GET /health`) for deployment monitoring. |
 
@@ -310,7 +316,7 @@ Requirements use MUST / SHOULD / MAY to indicate priority (RFC 2119).
 1. User navigates to Progress
 2. Views course-by-course completion percentages
 3. Views completion timeline chart
-4. Sees planned vs actual study hours
+4. Sees planned estimated hours vs completed estimated hours (derived from completed tasks)
 5. Identifies overdue or at-risk tasks
 
 ---
@@ -318,7 +324,7 @@ Requirements use MUST / SHOULD / MAY to indicate priority (RFC 2119).
 ## 7. AI-Specific Requirements
 
 ### 7.1 AI Provider Abstraction
-The backend MUST implement an `AIService` interface/class that wraps all LLM calls. Swapping the provider (Gemini → OpenAI) MUST require only configuration changes, not logic changes.
+The backend MUST implement an `AIService` class that wraps all LLM calls. The concrete implementation for the MVP is `GeminiAIService` using `gemini-2.5-flash`. The `AIService` interface MUST be defined independently of the implementation so that a different provider can be added later without changing any business logic or API route code. No second provider is implemented for the MVP.
 
 ### 7.2 Prompt Engineering Standards
 - System prompts MUST establish the AI's role as an academic study coach
@@ -362,8 +368,8 @@ The following AI interactions MUST return parseable structured output:
 | Backend | Python 3.11+, FastAPI |
 | Database | PostgreSQL 15+ via SQLAlchemy ORM (async) |
 | Migrations | Alembic |
-| AI Provider | Google Gemini (primary); OpenAI (secondary fallback) |
-| File Storage | Local filesystem for development; cloud object storage (e.g., Cloudflare R2 or S3-compatible) for production |
+| AI Provider | Google Gemini `gemini-2.5-flash` — abstracted behind `AIService`. Single provider for MVP; abstraction allows future provider addition without logic changes. |
+| File Storage | Local filesystem for development. Supabase Storage (S3-compatible) for production. Abstracted behind `StorageService`. |
 | Auth | JWT (python-jose or PyJWT) + bcrypt |
 | PDF Processing | pypdf library — text extraction only, no OCR |
 | Environment Config | python-dotenv (backend), Vite env variables (frontend) |
@@ -379,7 +385,7 @@ The following AI interactions MUST return parseable structured output:
 |---|---|
 | Must be publicly deployed | Evaluators must access it via HTTPS URL |
 | Zero local setup for evaluators | All features must work in the deployed environment |
-| Free-tier hosting | Render (backend), Vercel (frontend), Neon/Supabase (database) |
+| Free-tier hosting | Vercel (frontend), Render (backend), Neon PostgreSQL (database), Supabase Storage (file uploads) |
 | Cold start awareness | Free-tier backends may cold-start. README must note this. |
 | Secret management | All secrets via environment variables on hosting platform, never in code |
 | CI/CD | Optional for MVP — manual deploy via platform CLI or dashboard is acceptable |
@@ -437,22 +443,12 @@ The MVP is considered complete when all of the following are true:
 
 ---
 
-## 12. Open Questions for Review
+## 12. Decision Record
 
-The following items require confirmation before the design phase begins:
+All open questions from v1.0 were resolved on 2026-08-30. See Section 3.3 (Decision Log) for the full resolution of each item. No open questions remain.
 
-1. **AI Provider:** Confirm Google Gemini (gemini-1.5-flash) as the primary AI provider, with OpenAI GPT-4o-mini as fallback. Do you have API keys for either, or a preference?
-
-2. **File Storage:** For production, uploaded PDFs need to be stored somewhere. Proposed: Cloudflare R2 (free tier, S3-compatible). Alternatively, Supabase Storage. Confirm preference or accept either.
-
-3. **Authentication scope:** Email + password JWT only. No OAuth (no Google/GitHub login) for MVP. Confirm this is acceptable.
-
-4. **Exam dates:** Should exams be a separate entity (Course + Date + Name) or a special task type (Type = "Exam")? Treating them as a task subtype is simpler — recommend this approach.
-
-5. **Study plan persistence:** Should previous study plans be stored as history (so user can view last 3 plans) or only the current/latest plan? Recommend latest-only for MVP simplicity.
-
-6. **Deployment platform preference:** Render (backend) + Vercel (frontend) + Neon (database) is the recommended free-tier stack. Any platform constraints or preferences?
+This document is approved and the project proceeds to the technical design phase (`design.md`).
 
 ---
 
-*End of Requirements Specification v1.0*
+*End of Requirements Specification v1.1*

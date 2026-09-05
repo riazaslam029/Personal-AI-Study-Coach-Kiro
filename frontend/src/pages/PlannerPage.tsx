@@ -33,12 +33,19 @@ export default function PlannerPage() {
       end_date: string
       available_hours_per_day: { [key: string]: number }
     }) => {
+      console.log('Generating plan with data:', data)
       const res = await api.post('/api/v1/plan/generate', data)
+      console.log('Plan generated successfully:', res.data)
       return res.data
     },
     onSuccess: () => {
+      console.log('Plan generation mutation succeeded, invalidating queries')
       queryClient.invalidateQueries({ queryKey: queryKeys.plan.current })
       setShowGenerateForm(false)
+    },
+    onError: (error: any) => {
+      console.error('Plan generation failed:', error)
+      console.error('Error response:', error.response?.data)
     },
   })
 
@@ -88,6 +95,15 @@ export default function PlannerPage() {
           isLoading={generatePlan.isPending}
           error={generatePlan.error}
         />
+      )}
+
+      {/* Success Message */}
+      {generatePlan.isSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+          <p className="text-green-800">
+            ✅ Study plan generated successfully! {sessions.length} sessions created.
+          </p>
+        </div>
       )}
 
       {/* Week Navigation */}

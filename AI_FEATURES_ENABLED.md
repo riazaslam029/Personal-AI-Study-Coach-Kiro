@@ -141,14 +141,16 @@ Open the interactive API docs and test directly:
 Your `backend/.env` is correctly configured:
 
 ```env
-GEMINI_API_KEY=AQ.Ab8RN6LhpnVyCiW-SoDyO_22aN0_Yfj4BDTRAERb_nXUNEhPxQ ✅
+GEMINI_API_KEY=<your-api-key-here> ✅
 GEMINI_MODEL=gemini-2.5-flash ✅
 ```
 
 ✅ Whitespace removed  
 ✅ API key format valid  
 ✅ Model name correct  
-✅ Backend restarted with new config  
+✅ Backend restarted with new config
+
+**Note**: Never commit real API keys to git. Keep them in `.env` files only (which are in `.gitignore`).  
 
 ---
 

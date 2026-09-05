@@ -45,7 +45,7 @@ export default function PlannerPage() {
   // Mark session complete
   const markComplete = useMutation({
     mutationFn: async (id: string) => {
-      const res = await api.post(`/api/v1/plan/sessions/${id}/complete`)
+      const res = await api.patch(`/api/v1/plan/sessions/${id}/complete`)
       return res.data
     },
     onSuccess: () => {
@@ -56,7 +56,7 @@ export default function PlannerPage() {
   // Group sessions by date
   const sessionsByDate: { [key: string]: StudySession[] } = {}
   sessions.forEach((session: StudySession) => {
-    const dateKey = session.date
+    const dateKey = session.session_date
     if (!sessionsByDate[dateKey]) {
       sessionsByDate[dateKey] = []
     }
@@ -175,12 +175,12 @@ function SessionCard({
   return (
     <div
       className={`p-2 rounded border ${
-        session.completed ? 'opacity-50' : ''
+        session.is_completed ? 'opacity-50' : ''
       } ${typeColors[session.session_type as keyof typeof typeColors] || 'bg-gray-100 border-gray-300'}`}
     >
       <div className="flex items-start justify-between mb-1">
         <h4 className="text-xs font-semibold line-clamp-2">{session.task_title}</h4>
-        {!session.completed && (
+        {!session.is_completed && (
           <button
             onClick={onComplete}
             className="text-green-600 hover:text-green-700 flex-shrink-0"
@@ -196,7 +196,7 @@ function SessionCard({
       {session.rationale && (
         <p className="text-xs text-gray-600 mt-1 line-clamp-2">{session.rationale}</p>
       )}
-      {session.completed && (
+      {session.is_completed && (
         <div className="text-xs text-green-600 font-medium mt-1">✓ Completed</div>
       )}
     </div>

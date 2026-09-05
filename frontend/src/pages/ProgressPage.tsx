@@ -24,29 +24,34 @@ export default function ProgressPage() {
   })
 
   // Fetch study sessions
-  const { data: sessions = [] } = useQuery({
+  const { data: planData } = useQuery({
     queryKey: queryKeys.plan.current,
     queryFn: async () => {
-      const res = await api.get('/api/v1/plan')
+      const res = await api.get('/api/v1/plan/')
       return res.data
     },
   })
+
+  // Extract sessions array from plan data
+  const sessions: StudySession[] = planData?.sessions_by_date 
+    ? Object.values(planData.sessions_by_date).flat()
+    : []
 
   // Calculate overall progress
   const totalTasks = tasks.length
   const completedTasks = tasks.filter((t: Task) => t.status === 'completed').length
   const inProgressTasks = tasks.filter((t: Task) => t.status === 'in_progress').length
-  const pendingTasks = tasks.filter((t: Task) => t.status === 'pending').length
+  const pendingTasks = tasks.filter((t: Task) => t.status === 'not_started').length
 
   // Calculate hours
-  const totalEstimatedHours = tasks.reduce((sum: number, t: Task) => sum + (t.estimated_duration || 0), 0)
+  const totalEstimatedHours = tasks.reduce((sum: number, t: Task) => sum + (t.estimated_hours || 0), 0)
   const completedHours = tasks
     .filter((t: Task) => t.status === 'completed')
-    .reduce((sum: number, t: Task) => sum + (t.estimated_duration || 0), 0)
+    .reduce((sum: number, t: Task) => sum + (t.estimated_hours || 0), 0)
 
   const plannedHours = sessions.reduce((sum: number, s: StudySession) => sum + s.duration_minutes / 60, 0)
   const completedSessionHours = sessions
-    .filter((s: StudySession) => s.completed)
+    .filter((s: StudySession) => s.is_completed)
     .reduce((sum: number, s: StudySession) => sum + s.duration_minutes / 60, 0)
 
   // Calculate per-course stats

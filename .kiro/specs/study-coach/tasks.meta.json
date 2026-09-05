@@ -1,0 +1,399 @@
+{
+  "pbtResults": {},
+  "executionHistory": {
+    "**1.1** Initialize the repository structure": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102889774
+      },
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102902501
+      },
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102972273
+      }
+    ],
+    "**1.2** Scaffold the FastAPI backend": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102889902
+      },
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102979817
+      },
+      {
+        "executionId": "9c08f9a3-d987-4d91-93f5-c1505484cb35",
+        "chatSessionId": "sess_63734560-ffee-4c7b-82af-f66a07e06ba3",
+        "timestamp": 1788115459471
+      }
+    ],
+    "**1.3** Configure the database connection and run initial migration": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890009
+      },
+      {
+        "executionId": "9c08f9a3-d987-4d91-93f5-c1505484cb35",
+        "chatSessionId": "sess_63734560-ffee-4c7b-82af-f66a07e06ba3",
+        "timestamp": 1788115468436
+      }
+    ],
+    "**1.4** Scaffold the React frontend": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890075
+      },
+      {
+        "executionId": "27199d43-fe0d-4ae2-927a-32584b294cb7",
+        "chatSessionId": "sess_98302d43-a54e-49e4-b23e-a544aae5b68d",
+        "timestamp": 1788212657000
+      }
+    ],
+    "**1.5** Implement the API client and auth store stubs": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890150
+      }
+    ],
+    "**2.1** Implement backend auth logic": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890217
+      }
+    ],
+    "**2.2** Implement auth Pydantic schemas": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890270
+      }
+    ],
+    "**2.3** Implement auth API router": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890339
+      }
+    ],
+    "**2.4** Implement frontend auth pages and flows": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890431
+      }
+    ],
+    "**3.1** Build reusable UI component library": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890472
+      }
+    ],
+    "**3.2** Implement backend course endpoints": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890524
+      }
+    ],
+    "**3.3** Implement frontend course management": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890586
+      }
+    ],
+    "**4.1** Implement backend task endpoints": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890635
+      }
+    ],
+    "**4.2** Implement frontend task management": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890687
+      }
+    ],
+    "**5.1** Implement storage service": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890741
+      }
+    ],
+    "**5.2** Implement material text extraction": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890790
+      }
+    ],
+    "**5.3** Implement backend material endpoints": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890851
+      }
+    ],
+    "**5.4** Implement frontend material management": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890906
+      }
+    ],
+    "**6.1** Implement the AI service layer": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102890969
+      }
+    ],
+    "**6.2** Implement AI assistant API routes": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891021
+      }
+    ],
+    "**6.3** Implement frontend AI assistant page": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891075
+      }
+    ],
+    "**7.1** Implement study planner AI method and prompts": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891135
+      }
+    ],
+    "**7.2** Implement plan service and API routes": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891193
+      }
+    ],
+    "**7.3** Implement frontend planner page": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891239
+      }
+    ],
+    "**8.1** Implement the dashboard page": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891289
+      }
+    ],
+    "**8.2** Wire exam display on dashboard": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891339
+      }
+    ],
+    "**9.1** Implement progress backend support": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891399
+      }
+    ],
+    "**9.2** Implement frontend progress page": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891454
+      }
+    ],
+    "**10.1** Wire adaptive planning prompts throughout the UI": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891506
+      }
+    ],
+    "**10.2** Handle edge cases in plan generation": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891566
+      }
+    ],
+    "**11.1** Global error handling and loading states": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891616
+      }
+    ],
+    "**11.2** Responsive layout and UI polish": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891668
+      }
+    ],
+    "**11.3** Backend hardening": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891720
+      }
+    ],
+    "**11.4** Environment and security audit": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891770
+      }
+    ],
+    "**11.5** Landing page completion": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891821
+      }
+    ],
+    "**12.1** Deploy the database": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891875
+      }
+    ],
+    "**12.2** Deploy the backend to Render": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102891973
+      }
+    ],
+    "**12.3** Deploy the frontend to Vercel": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892024
+      }
+    ],
+    "**12.4** Set up Supabase Storage": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892074
+      }
+    ],
+    "Register a new account": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892122
+      }
+    ],
+    "Create 2 courses": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892195
+      }
+    ],
+    "Create 3 tasks (mix of assignment, exam, regular) with upcoming deadlines": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892290
+      }
+    ],
+    "Upload a PDF and a pasted-text material": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892356
+      }
+    ],
+    "Ask the AI assistant a question about the uploaded material": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892424
+      }
+    ],
+    "Generate a study plan for the next 7 days": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892476
+      }
+    ],
+    "View the dashboard — all panels populated": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892534
+      }
+    ],
+    "Mark a task complete — toast appears": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892587
+      }
+    ],
+    "View the progress page — completion stats and chart visible": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892640
+      }
+    ],
+    "Log out — redirected to landing page": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892698
+      }
+    ],
+    "Log back in — session restored correctly": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892752
+      }
+    ],
+    "**12.6** Write the README": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892806
+      }
+    ],
+    "**12.7** Final git history review": [
+      {
+        "executionId": "5324516a-80ef-4123-977a-aa6c1b96a908",
+        "chatSessionId": "sess_9d26c824-7d43-4f21-8335-200b3dbf1d9b",
+        "timestamp": 1788102892864
+      }
+    ]
+  }
+}

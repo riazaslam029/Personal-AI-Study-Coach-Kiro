@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Filter, Search, CheckCircle2, Circle, Clock, AlertTriangle, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Filter, Search, CheckCircle2, Circle, Clock, AlertTriangle, Edit2, Trash2, ListTodo } from 'lucide-react'
 import { format, parseISO, isPast } from 'date-fns'
 import api from '../lib/api'
 import { queryKeys } from '../lib/queryKeys'
+import EmptyState from '../components/EmptyState'
 import type { Task, Course } from '../types'
 
 interface TaskFormData {
@@ -244,17 +245,32 @@ export default function TasksPage() {
         <div className="card p-12 text-center">
           <div className="animate-pulse">Loading tasks...</div>
         </div>
+      ) : tasks.length === 0 ? (
+        <EmptyState
+          icon={ListTodo}
+          title="No tasks yet!"
+          description="Create your first task to start organizing your academic work. Break down assignments, readings, and projects into manageable pieces."
+          action={{
+            label: 'Create Your First Task',
+            onClick: () => {
+              setEditingTask(null)
+              setShowForm(true)
+            }
+          }}
+          illustration="tasks"
+        />
       ) : filteredTasks.length === 0 ? (
         <div className="card p-12 text-center">
           <div className="w-16 h-16 rounded-full bg-gray-100 mx-auto mb-4 flex items-center justify-center">
             <Search className="w-8 h-8 text-gray-400" />
           </div>
-          <p className="text-gray-600 mb-4">No tasks found matching your filters</p>
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No matches found</h3>
+          <p className="text-gray-600 mb-4">Try adjusting your filters or search terms</p>
           <button
             onClick={() => setFilters({ status: 'all', priority: 'all', type: 'all', search: '' })}
             className="btn-secondary"
           >
-            Clear Filters
+            Clear All Filters
           </button>
         </div>
       ) : (

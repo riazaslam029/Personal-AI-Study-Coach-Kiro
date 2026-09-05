@@ -1,9 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { Calendar, AlertCircle, Sparkles, TrendingUp, BookOpen, Target, Clock, Award } from 'lucide-react'
+import { Calendar, AlertCircle, Sparkles, TrendingUp, BookOpen, Target, Clock, Award, ListTodo } from 'lucide-react'
 import { format, isToday, isPast, parseISO } from 'date-fns'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
 import { queryKeys } from '../lib/queryKeys'
+import EmptyState from '../components/EmptyState'
 import type { Task } from '../types'
 
 interface StudySession {

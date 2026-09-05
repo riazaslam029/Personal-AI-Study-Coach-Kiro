@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Upload, FileText, Plus, Trash2, File, FileCheck, AlertCircle, Calendar, HardDrive } from 'lucide-react'
+import { Upload, FileText, Plus, Trash2, File, FileCheck, AlertCircle, Calendar, HardDrive, BookOpen } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import api from '../lib/api'
 import { queryKeys } from '../lib/queryKeys'
+import EmptyState from '../components/EmptyState'
 import type { StudyMaterial, Course } from '../types'
 
 // Helper function to format error messages
@@ -156,23 +157,16 @@ export default function MaterialsPage() {
           <div className="animate-pulse">Loading materials...</div>
         </div>
       ) : materials.length === 0 ? (
-        <div className="card p-12 text-center">
-          <div className="w-16 h-16 rounded-full bg-gray-100 mx-auto mb-4 flex items-center justify-center">
-            <FileText className="w-8 h-8 text-gray-400" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No materials yet</h3>
-          <p className="text-gray-600 mb-6">Upload PDFs or paste text to build your study library</p>
-          <div className="flex gap-3 justify-center">
-            <button onClick={() => setShowUploadForm(true)} className="btn-primary flex items-center gap-2">
-              <Upload className="w-5 h-5" />
-              Upload PDF
-            </button>
-            <button onClick={() => setShowPasteForm(true)} className="btn-secondary flex items-center gap-2">
-              <FileText className="w-5 h-5" />
-              Paste Text
-            </button>
-          </div>
-        </div>
+        <EmptyState
+          icon={BookOpen}
+          title="Your study library is empty"
+          description="Upload lecture notes, textbooks, or paste study materials to get started. The AI will help you summarize, extract key points, and generate quizzes from your content."
+          action={{
+            label: 'Upload Your First Material',
+            onClick: () => setShowUploadForm(true)
+          }}
+          illustration="materials"
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {materials.map((material: StudyMaterial) => (

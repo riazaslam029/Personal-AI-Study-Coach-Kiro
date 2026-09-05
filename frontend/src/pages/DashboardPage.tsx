@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
-import { Calendar, AlertCircle, Sparkles, TrendingUp, BookOpen } from 'lucide-react'
+import { Calendar, AlertCircle, Sparkles, TrendingUp, BookOpen, Target, Clock, Award } from 'lucide-react'
 import { format, isToday, isPast, parseISO } from 'date-fns'
+import { Link } from 'react-router-dom'
 import api from '../lib/api'
 import { queryKeys } from '../lib/queryKeys'
 import type { Task } from '../types'
@@ -114,64 +115,117 @@ export default function DashboardPage() {
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+    <div className="space-y-8">
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-academic-800 to-academic-700 rounded-card p-8 text-white shadow-elevated">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold mb-2 tracking-tight">Welcome back, Scholar</h1>
+            <p className="text-academic-200 text-lg mb-6">
+              {completionRate >= 70 
+                ? "You're making excellent progress! Keep up the momentum."
+                : "Let's make today productive. Your study plan is ready."}
+            </p>
+            <div className="flex gap-4">
+              <Link 
+                to="/planner" 
+                className="px-6 py-3 bg-white text-academic-800 rounded-lg font-semibold hover:bg-cream-50 transition-all shadow-md hover:shadow-lg"
+              >
+                View Study Plan
+              </Link>
+              <Link 
+                to="/assistant" 
+                className="px-6 py-3 bg-academic-600 text-white rounded-lg font-semibold hover:bg-academic-500 transition-all border border-academic-500"
+              >
+                Ask AI Assistant
+              </Link>
+            </div>
+          </div>
+          <div className="hidden lg:flex items-center justify-center w-32 h-32 bg-white/10 rounded-full border-4 border-white/20">
+            <Award className="w-16 h-16 text-amber-300" />
+          </div>
+        </div>
+      </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
           title="Total Tasks"
           value={totalTasks}
-          icon={<BookOpen className="w-6 h-6" />}
-          color="bg-blue-500"
+          subtitle="across all courses"
+          icon={<Target className="w-6 h-6" />}
+          color="bg-academic-600"
+          trend={null}
         />
         <StatCard
           title="Completed"
           value={completedTasks}
+          subtitle={`${completionRate}% completion rate`}
           icon={<TrendingUp className="w-6 h-6" />}
-          color="bg-green-500"
-        />
-        <StatCard
-          title="Completion Rate"
-          value={`${completionRate}%`}
-          icon={<Sparkles className="w-6 h-6" />}
-          color="bg-indigo-500"
+          color="bg-forest-600"
+          trend="up"
         />
         <StatCard
           title="Today's Sessions"
           value={todaySessions.length}
+          subtitle={todaySessions.length > 0 ? "scheduled for today" : "no sessions today"}
           icon={<Calendar className="w-6 h-6" />}
-          color="bg-purple-500"
+          color="bg-amber-600"
+          trend={null}
+        />
+        <StatCard
+          title="Study Streak"
+          value="0"
+          subtitle="consecutive days"
+          icon={<Sparkles className="w-6 h-6" />}
+          color="bg-sage-600"
+          trend={null}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Today's Study Sessions */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Calendar className="w-6 h-6 text-indigo-600" />
-            Today's Study Sessions
-          </h2>
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-academic-600" />
+              Today's Study Sessions
+            </h2>
+            <Link to="/planner" className="text-sm text-academic-600 hover:text-academic-700 font-medium">
+              View All →
+            </Link>
+          </div>
           {todaySessions.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No sessions scheduled for today</p>
+            <div className="text-center py-12">
+              <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No sessions scheduled for today</p>
+              <Link to="/planner" className="text-sm text-academic-600 hover:text-academic-700 mt-2 inline-block">
+                Generate a study plan
+              </Link>
+            </div>
           ) : (
             <div className="space-y-3">
               {todaySessions.map((session: StudySession) => (
                 <div
                   key={session.id}
-                  className={`p-4 rounded-lg border ${
+                  className={`p-4 rounded-lg border-l-4 transition-all ${
                     session.is_completed
-                      ? 'bg-green-50 border-green-200'
-                      : 'bg-gray-50 border-gray-200'
+                      ? 'bg-sage-50 border-sage-500'
+                      : 'bg-cream-50 border-academic-500 hover:bg-cream-100'
                   }`}
                 >
-                  <h3 className="font-semibold text-gray-900">{String(session.task_title)}</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {String(session.duration_minutes)} minutes • {String(session.session_type)}
-                  </p>
-                  {session.is_completed && (
-                    <span className="text-xs text-green-600 font-medium">✓ Completed</span>
-                  )}
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{String(session.task_title)}</h3>
+                      <p className="text-sm text-gray-600 mt-1 flex items-center gap-2">
+                        <Clock className="w-4 h-4" />
+                        {String(session.duration_minutes)} min • {String(session.session_type).replace('_', ' ')}
+                      </p>
+                    </div>
+                    {session.is_completed && (
+                      <span className="badge-success">Completed</span>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -179,40 +233,58 @@ export default function DashboardPage() {
         </div>
 
         {/* Upcoming Deadlines */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <AlertCircle className="w-6 h-6 text-red-600" />
-            Upcoming Deadlines
-          </h2>
+        <div className="card p-6">
+          <div className="flex items-center justify-between mb-5">
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <AlertCircle className="w-5 h-5 text-red-600" />
+              Upcoming Deadlines
+            </h2>
+            <Link to="/tasks" className="text-sm text-academic-600 hover:text-academic-700 font-medium">
+              View All →
+            </Link>
+          </div>
           {upcomingDeadlines.length === 0 ? (
-            <p className="text-gray-500 text-center py-8">No upcoming deadlines</p>
+            <div className="text-center py-12">
+              <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500">No upcoming deadlines</p>
+              <Link to="/tasks" className="text-sm text-academic-600 hover:text-academic-700 mt-2 inline-block">
+                Create a task
+              </Link>
+            </div>
           ) : (
             <div className="space-y-3">
               {upcomingDeadlines.map((task: Task) => (
-                <div key={task.id} className="p-4 rounded-lg bg-gray-50 border border-gray-200">
-                  <h3 className="font-semibold text-gray-900">{String(task.title)}</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Due: {format(
+                <div key={task.id} className="p-4 rounded-lg bg-cream-50 border border-gray-200 hover:border-academic-300 hover:shadow-sm transition-all">
+                  <div className="flex items-start justify-between mb-2">
+                    <h3 className="font-semibold text-gray-900 flex-1">{String(task.title)}</h3>
+                    <span className={`badge ${
+                      task.priority === 'high'
+                        ? 'bg-red-100 text-red-700 border-red-200'
+                        : task.priority === 'medium'
+                        ? 'bg-amber-100 text-amber-700 border-amber-200'
+                        : 'bg-sage-100 text-sage-700 border-sage-200'
+                    }`}>
+                      {String(task.priority)}
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-600 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Due {format(
                       typeof task.deadline === 'string' 
                         ? parseISO(task.deadline) 
                         : new Date(task.deadline!), 
                       'MMM d, yyyy'
                     )}
                   </p>
-                  <div className="flex gap-2 mt-2">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      task.priority === 'high'
-                        ? 'bg-red-100 text-red-800'
-                        : task.priority === 'medium'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}>
-                      {String(task.priority)}
-                    </span>
-                    <span className="text-xs px-2 py-1 rounded-full bg-gray-200 text-gray-800">
-                      {String(task.task_type)}
-                    </span>
-                  </div>
+                  {task.course_name && (
+                    <div className="flex items-center gap-2 mt-2">
+                      <div 
+                        className="w-2 h-2 rounded-full" 
+                        style={{ backgroundColor: task.course_color || '#1E293B' }}
+                      />
+                      <span className="text-xs text-gray-500">{task.course_name}</span>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -222,21 +294,30 @@ export default function DashboardPage() {
 
       {/* AI Recommendations */}
       {prioritization && prioritization.prioritized_tasks && prioritization.prioritized_tasks.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-indigo-600" />
-            AI Recommendations
+        <div className="card p-6 bg-gradient-to-br from-academic-50 to-white border-academic-200">
+          <h2 className="text-xl font-semibold text-gray-900 mb-1 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-amber-500" />
+            AI Study Recommendations
           </h2>
+          <p className="text-sm text-gray-600 mb-5">AI-prioritized tasks based on deadlines, difficulty, and importance</p>
           <div className="space-y-3">
             {prioritization.prioritized_tasks.slice(0, 3).map((item: any, i: number) => (
-              <div key={i} className="p-4 rounded-lg bg-indigo-50 border border-indigo-200">
-                <div className="flex items-start gap-3">
-                  <span className="text-2xl font-bold text-indigo-600">#{String(item.priority_rank)}</span>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">
+              <div key={i} className="p-5 rounded-lg bg-white border border-academic-200 shadow-sm hover:shadow-md transition-all">
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-amber-500 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+                    #{String(item.priority_rank)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-900 mb-1">
                       {String(tasks.find((t: Task) => t.id === item.task_id)?.title || 'Task')}
                     </h3>
-                    <p className="text-sm text-gray-700 mt-1">{String(item.explanation)}</p>
+                    <p className="text-sm text-gray-700 leading-relaxed">{String(item.explanation)}</p>
+                    <Link 
+                      to="/tasks" 
+                      className="text-xs text-academic-600 hover:text-academic-700 font-medium mt-2 inline-block"
+                    >
+                      View Task Details →
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -251,22 +332,36 @@ export default function DashboardPage() {
 function StatCard({
   title,
   value,
+  subtitle,
   icon,
   color,
+  trend,
 }: {
   title: string
   value: string | number
+  subtitle: string
   icon: React.ReactNode
   color: string
+  trend: 'up' | 'down' | null
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600 mb-1">{title}</p>
-          <p className="text-3xl font-bold text-gray-900">{value}</p>
+    <div className="card p-6 hover:shadow-card-hover transition-all">
+      <div className="flex items-start justify-between mb-4">
+        <div className={`${color} text-white p-3 rounded-lg shadow-sm`}>
+          {icon}
         </div>
-        <div className={`${color} text-white p-3 rounded-lg`}>{icon}</div>
+        {trend && (
+          <span className={`text-xs font-semibold px-2 py-1 rounded-full ${
+            trend === 'up' ? 'bg-sage-100 text-sage-700' : 'bg-red-100 text-red-700'
+          }`}>
+            {trend === 'up' ? '↑' : '↓'}
+          </span>
+        )}
+      </div>
+      <div>
+        <p className="text-sm font-medium text-gray-600 mb-1">{title}</p>
+        <p className="text-3xl font-bold text-gray-900 mb-1">{value}</p>
+        <p className="text-xs text-gray-500">{subtitle}</p>
       </div>
     </div>
   )

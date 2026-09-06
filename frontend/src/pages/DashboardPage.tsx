@@ -121,8 +121,8 @@ export default function DashboardPage() {
       <div className="bg-gradient-to-br from-academic-800 to-academic-700 rounded-card p-8 text-white shadow-elevated">
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-2 tracking-tight">Welcome back, Scholar</h1>
-            <p className="text-academic-200 text-lg mb-6">
+            <h1 className="text-3xl font-bold mb-2 tracking-tight text-cream-50">Welcome back, Scholar</h1>
+            <p className="text-cream-100 text-lg mb-6">
               {completionRate >= 70 
                 ? "You're making excellent progress! Keep up the momentum."
                 : "Let's make today productive. Your study plan is ready."}

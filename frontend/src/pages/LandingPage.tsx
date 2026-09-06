@@ -66,40 +66,51 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <header className="container mx-auto px-4 py-20 lg:py-28">
-        <div className="max-w-5xl mx-auto text-center">
+      <header className="container mx-auto px-4 py-20 lg:py-28 relative overflow-hidden">
+        {/* Decorative background elements */}
+        <div className="absolute top-1/4 right-0 w-96 h-96 bg-gradient-to-br from-academic-100/40 to-sage-100/40 rounded-full blur-3xl -z-10"></div>
+        <div className="absolute bottom-1/4 left-0 w-80 h-80 bg-gradient-to-br from-amber-100/30 to-forest-100/30 rounded-full blur-3xl -z-10"></div>
+        
+        <div className="max-w-5xl mx-auto text-center relative z-10">
           {/* Badge */}
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-academic-100 to-sage-100 text-academic-800 text-sm font-medium mb-8 shadow-sm">
-            <Sparkles className="w-4 h-4 text-academic-600" />
+          <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-academic-50 via-sage-50 to-academic-50 border border-academic-200/50 text-academic-800 text-sm font-semibold mb-8 shadow-sm hover:shadow-md transition-shadow animate-fade-in">
+            <Sparkles className="w-4 h-4 text-amber-600 animate-pulse" />
             AI-Powered Study Platform for Students
           </div>
 
           {/* Headline */}
-          <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 mb-6 tracking-tight leading-tight">
-            Study Smarter with
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-academic-800 to-forest-700">
-              AI-Powered Learning
+          <h1 className="text-5xl lg:text-7xl font-extrabold mb-6 tracking-tight leading-[1.1]">
+            <span className="text-gray-900">Study Smarter with</span>
+            <br />
+            <span className="relative inline-block mt-2">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-forest-700 via-academic-700 to-academic-800 animate-gradient">
+                AI-Powered Learning
+              </span>
+              {/* Underline decoration */}
+              <svg className="absolute -bottom-2 left-0 w-full h-3 text-amber-400/40" viewBox="0 0 200 12" preserveAspectRatio="none">
+                <path d="M0,7 Q50,0 100,7 T200,7" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+              </svg>
             </span>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl lg:text-2xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed font-light">
             Transform your study materials into personalized learning plans. Get instant AI assistance, 
             intelligent task prioritization, and track your academic progress—all in one place.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-14">
             <Link
               to="/register"
-              className="btn-primary text-lg px-8 py-4 shadow-md hover:shadow-lg transition-shadow flex items-center gap-2"
+              className="group btn-primary text-lg px-10 py-4 shadow-lg hover:shadow-xl transition-all flex items-center gap-2 hover:scale-105"
             >
-              <GraduationCap className="w-5 h-5" />
+              <GraduationCap className="w-5 h-5 group-hover:rotate-12 transition-transform" />
               Start Learning Smarter
             </Link>
             <Link
               to="/login"
-              className="btn-secondary text-lg px-8 py-4 flex items-center gap-2"
+              className="btn-secondary text-lg px-10 py-4 flex items-center gap-2 hover:scale-105 transition-transform"
             >
               <BookOpen className="w-5 h-5" />
               I Have an Account
@@ -108,8 +119,12 @@ export default function LandingPage() {
 
           {/* Quick Benefits */}
           <div className="flex flex-wrap justify-center gap-6 text-sm text-gray-600">
-            {benefits.map((benefit) => (
-              <div key={benefit} className="flex items-center gap-2">
+            {benefits.map((benefit, idx) => (
+              <div 
+                key={benefit} 
+                className="flex items-center gap-2 animate-fade-in-up"
+                style={{ animationDelay: `${idx * 100}ms` }}
+              >
                 <CheckCircle2 className="w-4 h-4 text-sage-600" />
                 <span>{benefit}</span>
               </div>

@@ -53,22 +53,6 @@ export default function AuthLayout() {
             ))}
           </div>
         </div>
-
-        {/* Bottom Stats */}
-        <div className="relative z-10 flex gap-8 pt-8 border-t border-white/10">
-          <div>
-            <div className="text-2xl font-bold mb-1">10,000+</div>
-            <div className="text-sm text-white/70">Study Sessions</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold mb-1">500+</div>
-            <div className="text-sm text-white/70">Active Students</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold mb-1">95%</div>
-            <div className="text-sm text-white/70">Satisfaction</div>
-          </div>
-        </div>
       </div>
 
       {/* Right Side - Auth Form */}

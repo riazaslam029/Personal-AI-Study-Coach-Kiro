@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { Calendar, AlertCircle, Sparkles, TrendingUp, BookOpen, Target, Clock, Award, ListTodo } from 'lucide-react'
+import { Calendar, AlertCircle, Sparkles, TrendingUp, BookOpen, Target, Clock, Award, ListTodo, CheckCircle2, Flame } from 'lucide-react'
 import { format, isToday, isPast, parseISO } from 'date-fns'
 import { Link } from 'react-router-dom'
 import api from '../lib/api'
@@ -162,7 +162,7 @@ export default function DashboardPage() {
           title="Completed"
           value={completedTasks}
           subtitle={`${completionRate}% completion rate`}
-          icon={<TrendingUp className="w-6 h-6" />}
+          icon={<CheckCircle2 className="w-6 h-6" />}
           color="bg-forest-600"
           trend="up"
         />
@@ -178,7 +178,7 @@ export default function DashboardPage() {
           title="Study Streak"
           value="0"
           subtitle="consecutive days"
-          icon={<Sparkles className="w-6 h-6" />}
+          icon={<Flame className="w-6 h-6" />}
           color="bg-sage-600"
           trend={null}
         />

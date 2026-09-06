@@ -34,7 +34,7 @@ export default function ProgressPage() {
 
   // Extract sessions array from plan data
   const sessions: StudySession[] = planData?.sessions_by_date 
-    ? Object.values(planData.sessions_by_date).flat()
+    ? (Object.values(planData.sessions_by_date).flat() as StudySession[])
     : []
 
   // Calculate overall progress

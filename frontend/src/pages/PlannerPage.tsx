@@ -23,7 +23,7 @@ export default function PlannerPage() {
 
   // Extract sessions from the response
   const sessions: StudySession[] = planData?.sessions_by_date 
-    ? Object.values(planData.sessions_by_date).flat()
+    ? (Object.values(planData.sessions_by_date).flat() as StudySession[])
     : []
 
   // Generate plan mutation

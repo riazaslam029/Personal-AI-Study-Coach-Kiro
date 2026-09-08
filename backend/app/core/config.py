@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     
     # OpenRouter (fallback AI provider)
     OPENROUTER_API_KEY: str = ""
-    OPENROUTER_MODEL: str = "google/gemini-2.0-flash-exp:free"
+    OPENROUTER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
     OPENROUTER_SITE_URL: str = "http://localhost:5173"
     OPENROUTER_APP_NAME: str = "Personal AI Study Coach"
 

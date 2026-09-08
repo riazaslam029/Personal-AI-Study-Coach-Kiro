@@ -47,7 +47,20 @@ class Settings(BaseSettings):
     
     # OpenRouter (fallback AI provider)
     OPENROUTER_API_KEY: str = ""
+    # Primary model (kept for backward compat and used as the first entry
+    # in the model cascade if OPENROUTER_MODELS is empty).
     OPENROUTER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
+    # Comma-separated cascade. Each model is tried in order on transient
+    # errors (429 rate limit, 502/503 overload, 404 model retired). All
+    # entries verified working on OpenRouter free tier.
+    OPENROUTER_MODELS: str = (
+        "nvidia/nemotron-3-ultra-550b-a55b:free,"
+        "nvidia/nemotron-3.5-lightning:free,"
+        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free,"
+        "dots-studio/dots-3-note-preview:free,"
+        "google/gemma-4-31b-it:free,"
+        "liquid/lfm-2.5-2.6b:free"
+    )
     OPENROUTER_SITE_URL: str = "http://localhost:5173"
     OPENROUTER_APP_NAME: str = "Personal AI Study Coach"
 

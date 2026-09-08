@@ -410,14 +410,25 @@ class GeminiAIService(AIService):
 
 
 class OpenRouterAIService(AIService):
-    """OpenRouter AI service implementation using httpx."""
+    """OpenRouter AI service with automatic model cascade.
+
+    Tries each model in `settings.OPENROUTER_MODELS` in order. On transient
+    upstream failures (429 rate limit, 5xx overload, 404 model retired, or
+    a body-level "Provider returned error" for the same reasons), it moves
+    to the next model. On the first success, returns the response.
+    """
+
+    # Transient status codes that should trigger a cascade to the next model.
+    # 401/403 (auth / permission) are *not* transient — we surface them.
+    _TRANSIENT_STATUS_CODES = {404, 408, 429, 500, 502, 503, 504}
 
     def __init__(self):
         """Initialize OpenRouter AI service."""
         if not settings.OPENROUTER_API_KEY:
             raise ValueError("OPENROUTER_API_KEY not configured")
-        
+
         import httpx
+        self._httpx = httpx
         self._client = httpx.AsyncClient(
             base_url="https://openrouter.ai/api/v1",
             headers={
@@ -428,37 +439,126 @@ class OpenRouterAIService(AIService):
             timeout=60.0,
         )
 
-    async def _generate(self, prompt: str, timeout: float = 60.0) -> str:
+        # Build the cascade: OPENROUTER_MODELS first, then OPENROUTER_MODEL
+        # as a fallback in case the list is empty. De-dupe while preserving
+        # order so the primary always appears first.
+        raw = (settings.OPENROUTER_MODELS or "").strip()
+        cascade = [m.strip() for m in raw.split(",") if m.strip()]
+        if settings.OPENROUTER_MODEL and settings.OPENROUTER_MODEL not in cascade:
+            cascade.insert(0, settings.OPENROUTER_MODEL)
+        if not cascade:
+            raise ValueError(
+                "No OpenRouter models configured. Set OPENROUTER_MODELS or "
+                "OPENROUTER_MODEL."
+            )
+        self._models: list[str] = cascade
+
+        import logging
+        self._logger = logging.getLogger(__name__)
+        self._logger.info(
+            "OpenRouter cascade: %d model(s) — %s",
+            len(self._models), " → ".join(self._models),
+        )
+
+    @staticmethod
+    def _is_transient_body_error(payload: dict) -> bool:
+        """Detect body-level provider errors that behave like transient 5xx.
+
+        OpenRouter sometimes returns HTTP 200 with an error object in the
+        body when the upstream provider fails (e.g. 'Service temporarily
+        overloaded'). Treat those the same as transient HTTP errors.
         """
-        Call OpenRouter API for text generation.
-        
-        Args:
-            prompt: The prompt text
-            timeout: Timeout in seconds
-            
-        Returns:
-            Generated text response
-            
-        Raises:
-            RuntimeError: If generation fails
-        """
+        if not isinstance(payload, dict):
+            return False
+        err = payload.get("error")
+        if not isinstance(err, dict):
+            return False
+        code = err.get("code")
+        if isinstance(code, int) and code in {404, 408, 429, 500, 502, 503, 504}:
+            return True
+        msg = (err.get("message") or "").lower()
+        transient_signals = (
+            "temporarily overloaded",
+            "rate-limited",
+            "rate limit",
+            "no endpoints found",
+            "upstream error",
+            "service unavailable",
+        )
+        return any(s in msg for s in transient_signals)
+
+    async def _try_model(
+        self, model: str, prompt: str, timeout: float
+    ) -> tuple[str | None, str | None]:
+        """Attempt one model. Returns (text, transient_error) — exactly one set."""
         try:
             response = await self._client.post(
                 "/chat/completions",
                 json={
-                    "model": settings.OPENROUTER_MODEL,
+                    "model": model,
                     "messages": [
                         {"role": "system", "content": STUDY_COACH_SYSTEM_PROMPT},
-                        {"role": "user", "content": prompt}
+                        {"role": "user", "content": prompt},
                     ],
                 },
                 timeout=timeout,
             )
-            response.raise_for_status()
+        except self._httpx.TimeoutException:
+            return None, "timeout"
+        except self._httpx.HTTPError as e:
+            return None, f"http-error: {type(e).__name__}"
+
+        # Transient HTTP status → cascade
+        if response.status_code in self._TRANSIENT_STATUS_CODES:
+            return None, f"status {response.status_code}"
+
+        # Non-transient failures (401/403/etc.) → let the caller raise
+        if response.status_code >= 400:
+            raise RuntimeError(
+                f"OpenRouter permanent error for {model}: "
+                f"HTTP {response.status_code} — {response.text[:200]}"
+            )
+
+        # Parse body — OpenRouter can return 200 with an error object
+        try:
             data = response.json()
-            return data["choices"][0]["message"]["content"]
-        except Exception as e:
-            raise RuntimeError(f"OpenRouter generation failed: {type(e).__name__}") from e
+        except ValueError:
+            return None, "invalid-json-body"
+
+        if self._is_transient_body_error(data):
+            err_msg = data.get("error", {}).get("message", "")
+            return None, f"provider-error: {err_msg[:120]}"
+
+        try:
+            content = data["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError):
+            return None, "malformed-response"
+
+        if not content or not str(content).strip():
+            return None, "empty-content"
+
+        return str(content), None
+
+    async def _generate(self, prompt: str, timeout: float = 60.0) -> str:
+        """Try each model in the cascade until one succeeds."""
+        errors: list[str] = []
+        for model in self._models:
+            self._logger.debug("OpenRouter → trying model %s", model)
+            try:
+                text, err = await self._try_model(model, prompt, timeout)
+            except RuntimeError:
+                # Permanent error (auth etc.) — no point retrying other models.
+                raise
+            if text is not None:
+                self._logger.info("OpenRouter ← succeeded with %s", model)
+                return text
+            self._logger.warning("OpenRouter × %s failed: %s", model, err)
+            errors.append(f"{model} ({err})")
+
+        # All models exhausted
+        raise RuntimeError(
+            "All OpenRouter models failed: " + "; ".join(errors)
+        )
 
     async def answer_question(
         self,

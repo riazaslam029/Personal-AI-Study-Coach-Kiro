@@ -11,7 +11,7 @@ from app.core.config import settings
 # ---------------------------------------------------------------------------
 # Password hashing — bcrypt (direct usage, compatible with Python 3.14)
 # ---------------------------------------------------------------------------
-BCRYPT_ROUNDS = 12
+BCRYPT_ROUNDS = 10  # Reduced from 12 for better performance (still secure)
 
 
 def hash_password(plain: str) -> str:

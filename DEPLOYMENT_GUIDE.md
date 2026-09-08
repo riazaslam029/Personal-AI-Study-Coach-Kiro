@@ -514,3 +514,113 @@ Your AI Study Coach is now live! 🎉
 
 Good luck with your hackathon! 🚀
 
+
+---
+
+## ☁️ Optional: AWS S3 File Storage
+
+You can use **Amazon S3** instead of Supabase Storage for uploaded PDFs. The
+backend selects the storage backend via the `STORAGE_BACKEND` env var:
+
+| Value | Backend | When to use |
+|---|---|---|
+| `local` | Local filesystem | Development |
+| `supabase` | Supabase Storage | Production (default) |
+| `s3` | Amazon S3 | Production (AWS credits) |
+
+### S3.1 — Create the bucket
+
+1. Sign in to the [S3 console](https://s3.console.aws.amazon.com/s3/home).
+2. Click **Create bucket**.
+   - **Bucket name**: `study-coach-<yourname>` (globally unique)
+   - **Region**: match your `.env` `AWS_REGION` (default `ap-south-1`)
+   - **Block Public Access**: leave all **ON** (we serve files via presigned URLs)
+   - **Object Ownership**: `Bucket owner enforced` (ACLs disabled)
+3. Click **Create bucket**.
+
+### S3.2 — Add CORS to the bucket
+
+Open the bucket → **Permissions** → **Cross-origin resource sharing (CORS)** →
+**Edit**, and paste:
+
+```json
+[
+  {
+    "AllowedHeaders": ["*"],
+    "AllowedMethods": ["GET", "PUT", "HEAD"],
+    "AllowedOrigins": [
+      "http://localhost:5173",
+      "https://personal-ai-study-coach-kiro.vercel.app"
+    ],
+    "ExposeHeaders": ["ETag"],
+    "MaxAgeSeconds": 3000
+  }
+]
+```
+
+Replace the Vercel URL with your real production frontend origin.
+
+### S3.3 — Create an IAM user with least-privilege access
+
+1. Open the [IAM console](https://console.aws.amazon.com/iam/) → **Users** →
+   **Create user** → name it `study-coach-backend` → **Next**.
+2. **Attach policies directly** → **Create policy** → JSON tab, paste (replace
+   `YOUR-BUCKET-NAME`):
+
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [
+       {
+         "Sid": "ObjectRW",
+         "Effect": "Allow",
+         "Action": [
+           "s3:PutObject",
+           "s3:GetObject",
+           "s3:DeleteObject"
+         ],
+         "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+       },
+       {
+         "Sid": "BucketList",
+         "Effect": "Allow",
+         "Action": ["s3:ListBucket"],
+         "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME"
+       }
+     ]
+   }
+   ```
+
+3. Name it `StudyCoachS3Access`, create it, attach to the user.
+4. Open the user → **Security credentials** → **Create access key** → choose
+   **Application running outside AWS** → save the **Access key ID** and
+   **Secret access key**.
+
+### S3.4 — Configure the backend
+
+In `backend/.env`:
+
+```bash
+STORAGE_BACKEND=s3
+AWS_ACCESS_KEY_ID=AKIA...paste from IAM
+AWS_SECRET_ACCESS_KEY=paste from IAM
+AWS_REGION=ap-south-1
+S3_BUCKET=study-coach-yourname
+S3_PRESIGNED_URL_TTL=3600
+```
+
+On **Render**, set the same variables in **Environment** for the backend service.
+
+### S3.5 — Verify
+
+Start the backend, upload a PDF from the app, and confirm in the S3 console
+that the object appears under `s3://YOUR-BUCKET-NAME/<user-id>/<uuid>.pdf`.
+
+The download URL returned by the API is a presigned GET URL that expires in
+`S3_PRESIGNED_URL_TTL` seconds (default 1 hour). Buckets stay private.
+
+### Cost note (with AWS credits)
+
+At MVP scale — a few thousand PDFs, occasional reads — S3 costs a few cents
+per month. AWS Free Tier covers the first 5 GB storage, 20K GET and 2K PUT
+requests per month for 12 months.

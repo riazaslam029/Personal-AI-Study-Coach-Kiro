@@ -52,11 +52,22 @@ class Settings(BaseSettings):
     OPENROUTER_APP_NAME: str = "Personal AI Study Coach"
 
     # Storage
+    # Backend options: "local" (dev), "supabase" (prod), "s3" (prod, AWS)
     STORAGE_BACKEND: str = "local"
     STORAGE_LOCAL_PATH: str = "./uploads"
+
+    # Supabase Storage
     SUPABASE_URL: str = ""
     SUPABASE_SERVICE_KEY: str = ""
     SUPABASE_BUCKET: str = "study-materials"
+
+    # AWS S3 Storage
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "ap-south-1"
+    S3_BUCKET: str = ""
+    # Seconds; used when generating presigned URLs for private buckets
+    S3_PRESIGNED_URL_TTL: int = 3600
 
     # CORS
     ALLOWED_ORIGINS: List[str] = ["http://localhost:5173"]

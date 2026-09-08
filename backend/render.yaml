@@ -21,13 +21,26 @@ services:
         sync: false
       - key: OPENROUTER_MODEL
         value: google/gemini-2.0-flash-exp:free
+      # Storage backend: "supabase" or "s3"
       - key: STORAGE_BACKEND
-        value: supabase
+        value: s3
+      # Supabase Storage (only used when STORAGE_BACKEND=supabase)
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_KEY
         sync: false
       - key: SUPABASE_BUCKET
         value: study-materials
+      # AWS S3 Storage (only used when STORAGE_BACKEND=s3)
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_PRESIGNED_URL_TTL
+        value: "3600"
       - key: ALLOWED_ORIGINS
-        value: '["https://your-frontend-url.vercel.app"]'
+        value: '["https://personal-ai-study-coach-kiro.vercel.app"]'

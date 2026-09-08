@@ -21,9 +21,11 @@ services:
         sync: false
       - key: OPENROUTER_MODEL
         value: google/gemini-2.0-flash-exp:free
-      # Storage backend: "supabase" or "s3"
+      # Storage backend: "supabase" or "s3".
+      # Switch to "s3" from the Render dashboard once you have set
+      # AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, and S3_BUCKET below.
       - key: STORAGE_BACKEND
-        value: s3
+        value: supabase
       # Supabase Storage (only used when STORAGE_BACKEND=supabase)
       - key: SUPABASE_URL
         sync: false

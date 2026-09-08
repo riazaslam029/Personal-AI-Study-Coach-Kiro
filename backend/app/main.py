@@ -11,6 +11,7 @@ app = FastAPI(title="Study Coach API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
+    allow_origin_regex=r"https://personal-ai-study-coach-kiro.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

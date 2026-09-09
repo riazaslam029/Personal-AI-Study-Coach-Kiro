@@ -1,4 +1,6 @@
 """Security utilities: password hashing, JWT, refresh tokens."""
+import hashlib
+import hmac
 import secrets
 from datetime import datetime, timedelta, timezone
 
@@ -71,23 +73,25 @@ def decode_access_token(token: str) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Refresh tokens — random, stored as bcrypt hash
+# Refresh tokens — random, stored as SHA-256 hash
 # ---------------------------------------------------------------------------
+# Refresh tokens are 256-bit random strings (see generate_refresh_token below),
+# so they already have high entropy. Bcrypt's slowness only helps against
+# brute-force of *low*-entropy passwords; it's wasted on random tokens.
+# SHA-256 gives us:
+#   • O(1) DB lookup: hash the incoming token, SELECT WHERE token_hash = ?
+#   • ~1 microsecond compute cost (bcrypt was ~100 ms)
+#   • Same security posture: DB leak still doesn't reveal the raw token.
 def generate_refresh_token() -> str:
     """Return a cryptographically secure random 32-byte URL-safe token."""
     return secrets.token_urlsafe(32)
 
 
 def hash_refresh_token(token: str) -> str:
-    """Hash a raw refresh token for DB storage."""
-    token_bytes = token.encode('utf-8')
-    salt = bcrypt.gensalt(rounds=BCRYPT_ROUNDS)
-    hashed = bcrypt.hashpw(token_bytes, salt)
-    return hashed.decode('utf-8')
+    """Hash a raw refresh token deterministically for DB storage."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def verify_refresh_token(raw: str, hashed: str) -> bool:
-    """Verify a raw refresh token against its hash."""
-    raw_bytes = raw.encode('utf-8')
-    hash_bytes = hashed.encode('utf-8')
-    return bcrypt.checkpw(raw_bytes, hash_bytes)
+    """Constant-time compare of the raw token's SHA-256 against a stored hash."""
+    return hmac.compare_digest(hash_refresh_token(raw), hashed)

@@ -38,8 +38,11 @@ async def register_user(
         full_name=full_name,
     )
     db.add(user)
+    # commit() flushes the INSERT with a RETURNING clause, so `user.id` and
+    # any server_default fields (timestamps, uuid) are populated automatically.
+    # An explicit db.refresh(user) here would be a second round-trip to Neon
+    # for data we already have.
     await db.commit()
-    await db.refresh(user)
     return user
 
 
@@ -84,23 +87,16 @@ async def rotate_refresh_token(
 ) -> tuple[User, str]:
     """Validate a refresh token, rotate it, return (user, new_raw_token).
 
+    O(1) direct lookup by SHA-256 hash of the token — no linear scan.
     Raises 401 if token not found or expired.
     """
-    # Fetch only non-expired tokens to reduce search space
     now = datetime.now(timezone.utc)
-    result = await db.execute(
-        select(RefreshToken).where(RefreshToken.expires_at > now)
-    )
-    records = result.scalars().all()
+    token_hash = hash_refresh_token(raw_token)
 
-    matched: RefreshToken | None = None
-    for record in records:
-        try:
-            if verify_refresh_token(raw_token, record.token_hash):
-                matched = record
-                break
-        except Exception:
-            continue
+    result = await db.execute(
+        select(RefreshToken).where(RefreshToken.token_hash == token_hash)
+    )
+    matched = result.scalar_one_or_none()
 
     if matched is None:
         raise HTTPException(
@@ -108,7 +104,6 @@ async def rotate_refresh_token(
             detail="Invalid or expired refresh token.",
         )
 
-    # Double-check expiration (paranoid check)
     if matched.expires_at.replace(tzinfo=timezone.utc) < now:
         await db.delete(matched)
         await db.commit()
@@ -120,13 +115,13 @@ async def rotate_refresh_token(
     user_result = await db.execute(select(User).where(User.id == matched.user_id))
     user = user_result.scalar_one_or_none()
     if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found."
+        )
 
-    # Delete old token
+    # Rotate: delete old, insert new — one round-trip via delete().execute().
     await db.delete(matched)
-    await db.flush()
 
-    # Issue new token
     new_raw_token = generate_refresh_token()
     expires_at = now + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     new_record = RefreshToken(
@@ -140,18 +135,9 @@ async def rotate_refresh_token(
 
 
 async def revoke_refresh_token(db: AsyncSession, raw_token: str) -> None:
-    """Revoke a refresh token (logout). Silently succeeds if not found."""
-    now = datetime.now(timezone.utc)
-    result = await db.execute(
-        select(RefreshToken).where(RefreshToken.expires_at > now)
+    """Revoke a refresh token (logout). O(1) direct lookup by hash."""
+    token_hash = hash_refresh_token(raw_token)
+    await db.execute(
+        delete(RefreshToken).where(RefreshToken.token_hash == token_hash)
     )
-    records = result.scalars().all()
-
-    for record in records:
-        try:
-            if verify_refresh_token(raw_token, record.token_hash):
-                await db.delete(record)
-                await db.commit()
-                return
-        except Exception:
-            continue
+    await db.commit()

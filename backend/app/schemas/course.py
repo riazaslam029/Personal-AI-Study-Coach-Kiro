@@ -1,9 +1,16 @@
 """Course schemas."""
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 import re
+
+
+def _empty_str_to_none(v: Any) -> Any:
+    if isinstance(v, str) and v.strip() == "":
+        return None
+    return v
 
 
 class CourseCreate(BaseModel):
@@ -23,6 +30,10 @@ class CourseUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     color: str | None = None
+
+    _blank_to_none = field_validator("description", mode="before")(
+        _empty_str_to_none
+    )
 
     @field_validator("color")
     @classmethod

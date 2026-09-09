@@ -1,6 +1,6 @@
 """Task CRUD endpoints."""
 from uuid import UUID
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,13 +16,18 @@ from app.schemas.task import TaskCreate, TaskUpdate, TaskResponse
 router = APIRouter()
 
 
-def _task_to_response(task: Task, course_name: str | None, course_color: str | None) -> TaskResponse:
+def _task_to_response(
+    task: Task,
+    course_name: str | None,
+    course_color: str | None,
+) -> TaskResponse:
     """Convert Task model to TaskResponse with computed fields."""
     today = date.today()
     is_overdue = (
-        task.status != "completed" and task.deadline is not None and task.deadline < today
+        task.status != "completed"
+        and task.deadline is not None
+        and task.deadline < today
     )
-
     return TaskResponse(
         id=task.id,
         course_id=task.course_id,
@@ -43,6 +48,24 @@ def _task_to_response(task: Task, course_name: str | None, course_color: str | N
     )
 
 
+async def _load_course_owned(
+    db: AsyncSession, course_id: UUID, user_id: UUID
+) -> Course:
+    """Fetch a course and ensure the current user owns it. Raises 404/403."""
+    result = await db.execute(select(Course).where(Course.id == course_id))
+    course = result.scalar_one_or_none()
+    if course is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Course not found"
+        )
+    if course.user_id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to use this course",
+        )
+    return course
+
+
 @router.get("", response_model=list[TaskResponse])
 async def list_tasks(
     course_id: UUID | None = Query(None),
@@ -56,15 +79,12 @@ async def list_tasks(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """List tasks with optional filters and sorting. Joins course for course_name and course_color."""
-    # Build query
+    """List tasks with optional filters and sorting. Course is eager-loaded."""
     stmt = (
         select(Task)
         .options(selectinload(Task.course))
         .where(Task.user_id == current_user.id)
     )
-
-    # Apply filters
     if course_id is not None:
         stmt = stmt.where(Task.course_id == course_id)
     if status_filter is not None:
@@ -78,24 +98,20 @@ async def list_tasks(
     if deadline_to is not None:
         stmt = stmt.where(Task.deadline <= deadline_to)
 
-    # Apply sorting
     order_col = getattr(Task, sort_by)
-    if sort_order == "asc":
-        stmt = stmt.order_by(order_col.asc())
-    else:
-        stmt = stmt.order_by(order_col.desc())
+    stmt = stmt.order_by(order_col.asc() if sort_order == "asc" else order_col.desc())
 
     result = await db.execute(stmt)
     tasks = result.scalars().all()
 
-    # Convert to response with course info
-    responses = []
-    for task in tasks:
-        course_name = task.course.name if task.course else None
-        course_color = task.course.color if task.course else None
-        responses.append(_task_to_response(task, course_name, course_color))
-
-    return responses
+    return [
+        _task_to_response(
+            task,
+            task.course.name if task.course else None,
+            task.course.color if task.course else None,
+        )
+        for task in tasks
+    ]
 
 
 @router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
@@ -105,21 +121,10 @@ async def create_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Create a new task."""
-    # Verify course ownership if course_id provided
+    # Verify course ownership if course_id provided (course object also feeds the response).
+    course: Course | None = None
     if task_data.course_id is not None:
-        course_result = await db.execute(
-            select(Course).where(Course.id == task_data.course_id)
-        )
-        course = course_result.scalar_one_or_none()
-        if course is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Course not found"
-            )
-        if course.user_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to add tasks to this course",
-            )
+        course = await _load_course_owned(db, task_data.course_id, current_user.id)
 
     task = Task(
         user_id=current_user.id,
@@ -134,18 +139,16 @@ async def create_task(
     )
     db.add(task)
     await db.commit()
+    # Populate server-side defaults (id, timestamps, status/priority) into the
+    # Python object. This refreshes scalar columns only — no relationships,
+    # so no MissingGreenlet risk in async mode.
     await db.refresh(task)
 
-    # Load course for response
-    if task.course_id:
-        await db.refresh(task, ["course"])
-        course_name = task.course.name
-        course_color = task.course.color
-    else:
-        course_name = None
-        course_color = None
-
-    return _task_to_response(task, course_name, course_color)
+    return _task_to_response(
+        task,
+        course.name if course else None,
+        course.color if course else None,
+    )
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
@@ -164,18 +167,17 @@ async def get_task(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
         )
-
-    # Enforce ownership
     if task.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to access this task",
         )
 
-    course_name = task.course.name if task.course else None
-    course_color = task.course.color if task.course else None
-
-    return _task_to_response(task, course_name, course_color)
+    return _task_to_response(
+        task,
+        task.course.name if task.course else None,
+        task.course.color if task.course else None,
+    )
 
 
 @router.patch("/{task_id}", response_model=TaskResponse)
@@ -186,6 +188,8 @@ async def update_task(
     db: AsyncSession = Depends(get_db),
 ):
     """Update a task. If status changes to 'completed', set completed_at."""
+    # Task loaded with course eager-loaded so we can access task.course without
+    # any lazy IO (that would raise MissingGreenlet in async mode).
     result = await db.execute(
         select(Task).options(selectinload(Task.course)).where(Task.id == task_id)
     )
@@ -195,34 +199,25 @@ async def update_task(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
         )
-
-    # Enforce ownership
     if task.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to update this task",
         )
 
-    # Verify course ownership if changing course_id
-    if task_data.course_id is not None and task_data.course_id != task.course_id:
-        course_result = await db.execute(
-            select(Course).where(Course.id == task_data.course_id)
+    # If the caller is reassigning the task to a different course, verify
+    # ownership of the new course and remember it for the response.
+    new_course: Course | None = None
+    if (
+        task_data.course_id is not None
+        and task_data.course_id != task.course_id
+    ):
+        new_course = await _load_course_owned(
+            db, task_data.course_id, current_user.id
         )
-        course = course_result.scalar_one_or_none()
-        if course is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Course not found"
-            )
-        if course.user_id != current_user.id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not authorized to assign task to this course",
-            )
 
-    # Track status change
     old_status = task.status
 
-    # Update fields
     if task_data.course_id is not None:
         task.course_id = task_data.course_id
     if task_data.title is not None:
@@ -242,16 +237,25 @@ async def update_task(
     if task_data.deadline is not None:
         task.deadline = task_data.deadline
 
-    # Set completed_at if status changed to 'completed'
     if old_status != "completed" and task.status == "completed":
-        from datetime import timezone
         task.completed_at = datetime.now(timezone.utc)
 
-    await db.commit()
-    await db.refresh(task, ["course"])
+    # Snapshot course details BEFORE commit — after refresh, the loaded
+    # relationship may or may not remain populated depending on SA internals.
+    if new_course is not None:
+        course_name = new_course.name
+        course_color = new_course.color
+    elif task.course is not None:
+        course_name = task.course.name
+        course_color = task.course.color
+    else:
+        course_name = None
+        course_color = None
 
-    course_name = task.course.name if task.course else None
-    course_color = task.course.color if task.course else None
+    await db.commit()
+    # Refresh scalar columns to pick up server-side updated_at. No attribute
+    # list so relationships are not touched.
+    await db.refresh(task)
 
     return _task_to_response(task, course_name, course_color)
 
@@ -270,8 +274,6 @@ async def delete_task(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
         )
-
-    # Enforce ownership
     if task.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -299,23 +301,20 @@ async def complete_task(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
         )
-
-    # Enforce ownership
     if task.user_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to complete this task",
         )
 
-    # Set status and timestamp
     task.status = "completed"
-    from datetime import timezone
     task.completed_at = datetime.now(timezone.utc)
+
+    # Snapshot course details from the eager-loaded relationship before commit.
+    course_name = task.course.name if task.course else None
+    course_color = task.course.color if task.course else None
 
     await db.commit()
     await db.refresh(task)
-
-    course_name = task.course.name if task.course else None
-    course_color = task.course.color if task.course else None
 
     return _task_to_response(task, course_name, course_color)

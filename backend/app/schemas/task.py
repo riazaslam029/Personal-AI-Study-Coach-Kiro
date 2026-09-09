@@ -1,8 +1,20 @@
 """Task schemas."""
 from datetime import datetime, date
+from typing import Any
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator
+
+
+def _empty_str_to_none(v: Any) -> Any:
+    """Pydantic 'before' hook: turn blank strings into None so the field
+    can validate against its Optional type. Frontend forms often submit
+    "" for unselected UUID/date fields; without this coercion Pydantic
+    rejects the request with a 422 that the user cannot see.
+    """
+    if isinstance(v, str) and v.strip() == "":
+        return None
+    return v
 
 
 class TaskCreate(BaseModel):
@@ -15,11 +27,19 @@ class TaskCreate(BaseModel):
     estimated_hours: float | None = None
     deadline: date | None = None
 
+    # Coerce "" -> None for the fields the frontend leaves blank.
+    _blank_to_none = field_validator(
+        "course_id", "deadline", "description", "estimated_hours",
+        "difficulty",
+        mode="before",
+    )(_empty_str_to_none)
+
     @field_validator("difficulty")
     @classmethod
     def validate_difficulty(cls, v: int | None) -> int | None:
-        if v is not None and (v < 1 or v > 5):
-            raise ValueError("Difficulty must be between 1 and 5")
+        # Frontend uses a 1-10 scale ("1 easy" to "10 very hard").
+        if v is not None and (v < 1 or v > 10):
+            raise ValueError("Difficulty must be between 1 and 10")
         return v
 
     @field_validator("estimated_hours")
@@ -41,11 +61,17 @@ class TaskUpdate(BaseModel):
     estimated_hours: float | None = None
     deadline: date | None = None
 
+    _blank_to_none = field_validator(
+        "course_id", "deadline", "description", "estimated_hours",
+        "difficulty",
+        mode="before",
+    )(_empty_str_to_none)
+
     @field_validator("difficulty")
     @classmethod
     def validate_difficulty(cls, v: int | None) -> int | None:
-        if v is not None and (v < 1 or v > 5):
-            raise ValueError("Difficulty must be between 1 and 5")
+        if v is not None and (v < 1 or v > 10):
+            raise ValueError("Difficulty must be between 1 and 10")
         return v
 
     @field_validator("estimated_hours")

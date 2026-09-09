@@ -36,7 +36,7 @@ AI is the core engine, not a chatbot add-on. Every AI call goes through a single
 | Frontend | React 18, Vite, TypeScript, Tailwind CSS | React Query, Zustand, react-hook-form |
 | Backend | Python 3.11, FastAPI | Async SQLAlchemy 2.x, Alembic migrations |
 | Database | PostgreSQL 15 (Neon, prod) | Managed serverless Postgres |
-| AI | Google Gemini `gemini-2.5-flash` | OpenRouter as fallback provider |
+| AI | OpenRouter (11-model cascade) + Google Gemini | Automatic fallback across providers on any transient error |
 | File Storage | **AWS S3** (prod) / Local filesystem (dev) | Supabase Storage still supported as alternative |
 | Auth | JWT (access 15 min + refresh 7 days), bcrypt | httpOnly refresh cookie, rotation on use |
 | PDF Extraction | `pypdf` | Text extraction only, no OCR |
@@ -53,7 +53,7 @@ This project uses **Amazon S3** as the primary production file store for user-up
 
 - **Private-by-default** — buckets stay non-public; the API serves files via short-lived presigned URLs
 - **Scale + reliability** — 11 nines of durability, region-local reads (`ap-south-1`)
-- **Cheap on credits** — AWS Free Tier covers 5 GB storage, 20K GET, 2K PUT per month
+- **Cheap on credits** — falls comfortably within AWS S3's applicable free-tier allowance for hackathon-scale traffic
 - **Clean fit for our abstraction** — `StorageService` was designed so backends are pluggable
 
 ### How it plugs in
@@ -200,7 +200,8 @@ Health check: `GET /health` (unversioned)
 
 ## AI service contract
 
-All model calls flow through one abstraction so the provider is replaceable:
+All model calls flow through one abstraction so providers are pluggable and
+composable:
 
 ```python
 class AIService:  # base / interface
@@ -211,8 +212,21 @@ class AIService:  # base / interface
     async def generate_study_plan(tasks, available_hours, date_range) -> list[StudySession]: ...
     async def prioritize_tasks(tasks) -> list[PrioritizedTask]: ...
 
-class GeminiAIService(AIService): ...   # concrete: gemini-2.5-flash
+class OpenRouterAIService(AIService): ...   # 11-model free-tier cascade
+class GeminiAIService(AIService):     ...   # gemini-2.5-flash
+
+class FallbackAIService(AIService):
+    """Tries providers in order (default: OpenRouter → Gemini).
+    On any transient failure — 429 rate limit, 5xx overload, 404 retired,
+    or malformed JSON — silently moves to the next provider so the app
+    almost never surfaces an 'AI unavailable' error to the user."""
 ```
+
+`OpenRouterAIService` internally cascades through 11 free models
+(`nex-agi/nex-n2.5-mini:free` first, then progressively larger backups) so
+even within a single provider a rate-limited or retired model doesn't
+break the request. Configurable via `OPENROUTER_MODELS` and
+`AI_PRIMARY_PROVIDER` in the environment.
 
 Every structured output is validated with Pydantic before it reaches the API.
 
@@ -249,8 +263,8 @@ TL;DR:
 | Frontend | Vercel | Yes | Static build from `frontend/` |
 | Backend | Render | Yes | Cold start ~30s after 15 min idle |
 | Database | Neon | Yes | Managed Postgres 15+ |
-| File storage | **AWS S3** | 5 GB + 12 months | Private bucket, presigned URLs |
-| AI model | Google Gemini | Free quota | `gemini-2.5-flash` |
+| File storage | **AWS S3** | Yes | Private bucket, presigned URLs |
+| AI models | OpenRouter + Google Gemini | Yes | Cascading fallback across 11+ free models |
 
 ---
 

@@ -45,22 +45,35 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.5-flash"
     
-    # OpenRouter (fallback AI provider)
+    # OpenRouter — primary AI provider.
     OPENROUTER_API_KEY: str = ""
-    # Primary model (kept for backward compat and used as the first entry
-    # in the model cascade if OPENROUTER_MODELS is empty).
-    OPENROUTER_MODEL: str = "nvidia/nemotron-3-ultra-550b-a55b:free"
-    # Comma-separated cascade. Each model is tried in order on transient
-    # errors (429 rate limit, 502/503 overload, 404 model retired). All
-    # entries verified working on OpenRouter free tier.
+    # First entry of the cascade (kept for backward compat).
+    OPENROUTER_MODEL: str = "nex-agi/nex-n2.5-mini:free"
+    # Comma-separated cascade. Tried in order on transient errors
+    # (429 rate limit, 5xx overload, 404 retired). Ordered fastest first
+    # so the median request finishes in ~2 seconds; every entry was
+    # observed responding with valid structured JSON on 2026-09-09.
     OPENROUTER_MODELS: str = (
-        "nvidia/nemotron-3-ultra-550b-a55b:free,"
+        # Fast tier (< 3s)
+        "nex-agi/nex-n2.5-mini:free,"
+        "nvidia/nemotron-3-super-120b-a12b:free,"
+        "nex-agi/nex-n2.5-pro:free,"
+        # Medium tier (3-7s)
+        "inclusionai/ling-3.0-flash-sante:free,"
+        "poolside/laguna-s-2.1:free,"
+        "inclusionai/ling-3.0-flash-fin:free,"
+        "liquid/lfm-2.5-2.6b:free,"
+        # Big / slower tier (9-14s) — last resort but very reliable
+        "cohere/north-mini-code:free,"
         "nvidia/nemotron-3.5-lightning:free,"
-        "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free,"
         "dots-studio/dots-3-note-preview:free,"
-        "google/gemma-4-31b-it:free,"
-        "liquid/lfm-2.5-2.6b:free"
+        "nvidia/nemotron-3-ultra-550b-a55b:free"
     )
+
+    # Which provider to try first. "openrouter" is the default because
+    # its per-model rate limits are lighter than Gemini's shared quota.
+    # Set to "gemini" if you have a paid Gemini key with high quota.
+    AI_PRIMARY_PROVIDER: str = "openrouter"
     OPENROUTER_SITE_URL: str = "http://localhost:5173"
     OPENROUTER_APP_NAME: str = "Personal AI Study Coach"
 

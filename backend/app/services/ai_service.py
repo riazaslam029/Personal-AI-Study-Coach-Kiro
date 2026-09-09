@@ -8,7 +8,7 @@ from typing import Any
 
 import google.generativeai as genai
 
-from app.core.config import settings
+from app.core.config import settings  # noqa: F401  # settings is used below
 from app.schemas.ai import (
     KeyPoint,
     PrioritizedTask,
@@ -618,65 +618,81 @@ class OpenRouterAIService(AIService):
 
 
 class FallbackAIService(AIService):
-    """AI service with automatic fallback from Gemini to OpenRouter."""
+    """AI service with automatic provider fallback.
+
+    Order is controlled by `settings.AI_PRIMARY_PROVIDER`:
+      - "openrouter" (default): OpenRouter cascade first, Gemini as last resort
+      - "gemini":               Gemini first, OpenRouter cascade as fallback
+
+    Under "openrouter" — the recommended setting for free tiers — the OpenRouter
+    cascade of 11 models handles most transient failures internally before the
+    Gemini fallback is even considered, so users almost never see the shared
+    Gemini quota exhaust visibly.
+    """
 
     def __init__(self):
-        """Initialize with both Gemini and OpenRouter services."""
         import logging
         self._logger = logging.getLogger(__name__)
-        
-        # Try to initialize both services
-        self._gemini = None
-        self._openrouter = None
-        
-        try:
-            self._gemini = GeminiAIService()
-            self._logger.info("✅ Gemini AI service initialized (primary)")
-        except Exception as e:
-            self._logger.warning(f"⚠️ Gemini initialization failed: {e}")
-        
+
+        self._gemini: GeminiAIService | None = None
+        self._openrouter: OpenRouterAIService | None = None
+
         try:
             self._openrouter = OpenRouterAIService()
-            self._logger.info("✅ OpenRouter AI service initialized (fallback)")
-        except Exception as e:
-            self._logger.warning(f"⚠️ OpenRouter initialization failed: {e}")
-        
-        if not self._gemini and not self._openrouter:
-            raise ValueError("No AI service available - both Gemini and OpenRouter failed to initialize")
+            self._logger.info("✅ OpenRouter AI service initialized")
+        except Exception as e:  # noqa: BLE001
+            self._logger.warning("⚠️ OpenRouter init failed: %s", e)
+
+        try:
+            self._gemini = GeminiAIService()
+            self._logger.info("✅ Gemini AI service initialized")
+        except Exception as e:  # noqa: BLE001
+            self._logger.warning("⚠️ Gemini init failed: %s", e)
+
+        if not self._openrouter and not self._gemini:
+            raise ValueError(
+                "No AI service available — both OpenRouter and Gemini failed "
+                "to initialize. Set OPENROUTER_API_KEY or GEMINI_API_KEY."
+            )
+
+        # Build the ordered try-list based on the primary preference.
+        primary = (settings.AI_PRIMARY_PROVIDER or "openrouter").lower()
+        if primary == "gemini":
+            self._order: list[tuple[str, AIService | None]] = [
+                ("gemini", self._gemini),
+                ("openrouter", self._openrouter),
+            ]
+        else:
+            self._order = [
+                ("openrouter", self._openrouter),
+                ("gemini", self._gemini),
+            ]
+        self._logger.info(
+            "AI provider order: %s",
+            " → ".join(name for name, svc in self._order if svc is not None),
+        )
 
     async def _generate_with_fallback(self, method_name: str, *args, **kwargs):
-        """
-        Try to call a method on Gemini, fallback to OpenRouter on failure.
-        
-        Args:
-            method_name: Name of the method to call
-            *args, **kwargs: Arguments to pass to the method
-            
-        Returns:
-            Result from either Gemini or OpenRouter
-        """
-        # Try Gemini first
-        if self._gemini:
+        """Call `method_name` on each configured provider in order until one succeeds."""
+        last_err: Exception | None = None
+        for name, svc in self._order:
+            if svc is None:
+                continue
             try:
-                method = getattr(self._gemini, method_name)
-                result = await method(*args, **kwargs)
-                self._logger.debug(f"✅ {method_name} succeeded via Gemini")
+                result = await getattr(svc, method_name)(*args, **kwargs)
+                self._logger.debug("✅ %s succeeded via %s", method_name, name)
                 return result
-            except Exception as e:
-                self._logger.warning(f"⚠️ Gemini {method_name} failed: {e}, falling back to OpenRouter")
-        
-        # Fallback to OpenRouter
-        if self._openrouter:
-            try:
-                method = getattr(self._openrouter, method_name)
-                result = await method(*args, **kwargs)
-                self._logger.info(f"✅ {method_name} succeeded via OpenRouter (fallback)")
-                return result
-            except Exception as e:
-                self._logger.error(f"❌ OpenRouter {method_name} also failed: {e}")
-                raise RuntimeError(f"Both AI providers failed for {method_name}") from e
-        
-        raise RuntimeError("No AI service available")
+            except Exception as e:  # noqa: BLE001
+                last_err = e
+                self._logger.warning(
+                    "⚠️ %s failed via %s: %s — trying next provider",
+                    method_name, name, e,
+                )
+
+        self._logger.error("❌ All AI providers failed for %s", method_name)
+        raise RuntimeError(
+            f"All AI providers failed for {method_name}"
+        ) from last_err
 
     async def answer_question(
         self,
